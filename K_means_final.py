@@ -79,7 +79,6 @@ def save_results(new_img, image_name, k, nb_iterations, method_distance):
         os.makedirs(repo)
 
     path = repo + 'res_k=' + str(k) + '_iter=' + str(nb_iterations) + '_dist=' + method_distance[0] + '__' + image_name
-    #image = cv2.cvtColor(new_img, cv2.COLOR_RGB2BGR)
     img.imsave(path, new_img)
     return path
 
@@ -92,8 +91,6 @@ def img_load(img_path):
     """
     global width, height
     image = img.imread(img_path);
-    # image = cv2.imread((img_path))
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     width, height, _ = image.shape
     basename = os.path.basename(img_path)
     return image, basename
