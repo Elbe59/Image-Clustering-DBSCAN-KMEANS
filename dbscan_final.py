@@ -4,6 +4,7 @@ import time as t
 import cv2
 import numpy as np
 import pandas as pd
+import matplotlib.image as img
 
 width = 0
 height = 0
@@ -34,8 +35,10 @@ def save_results(new_img, image_name, eps, minPts, method_distance):
         os.makedirs(repo)
 
     path = repo + 'res_eps=' + str(eps) + '_minPts=' + str(minPts) + '_dist=' + method_distance[0] + '__' + image_name
-    image = cv2.cvtColor(new_img, cv2.COLOR_RGB2BGR)  # Il faut retransformer en type bgr pour openCV
-    cv2.imwrite(path, image)
+    # image = cv2.cvtColor(new_img, cv2.COLOR_RGB2BGR)  # Il faut retransformer en type bgr pour openCV
+    # cv2.imwrite(path, image)
+    img.imsave(path, new_img)
+
     return path
 
 
@@ -46,8 +49,9 @@ def img_load(img_path):
     :param img_name:
     """
     global width, height
-    image = cv2.imread(img_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # image = cv2.imread(img_path)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = img.imread(img_path)
     width, height, _ = image.shape
     basename = os.path.basename(img_path)
     return image,basename
@@ -82,9 +86,15 @@ def predict_clusters(eps, minPts, method_distance, df):
     list_clusters = {}
     list_clusters[0] = []
     list_clusters[1] = []
+    previous = len(visiteNo)
+    new = 0
     while (len(visiteNo) != 0):
         first_pt = True  # On identifie que le point actuel est le premier point du cluster
         stack_c.add(random.choice(visiteNo))  # On choisi un point non visité
+        if(previous == df.shape[0] or previous-new > 100):
+            previous = len(visiteNo)
+            print("Il reste encore: "+str(len(visiteNo))+" pixels à traiter / "+str(df.shape[0]))
+        new = len(visiteNo)
         while (
                 len(stack_c) != 0):  # Tant que la pile n'est pas vide c'est qu'il y a encore des points à traiter dans le cluster
             c_index = stack_c.pop()  # Dernier point de la pile
@@ -156,8 +166,11 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 
 def launch(eps, minPts, method, image_path,new_width,new_height):
     global image
+    print("Programme lancé, pour l'image : ")
     start = t.time()
     image,image_name = img_load(img_path=image_path)
+    print("Programme lancé, pour l'image : "+image_name)
+
     image = image_resize(image,width=new_width,height=new_height)
     width,height,_ = image.shape
     image = image.reshape((image.shape[0] * image.shape[1], 3))
@@ -178,4 +191,6 @@ def launch(eps, minPts, method, image_path,new_width,new_height):
     path = save_results(recolored_img,image_name,eps,minPts,method)
 
     end = t.time()
+    print("Processus terminé en "+str(round(end - start))+" secondes")
+
     return recolored_img,path,round(end-start)

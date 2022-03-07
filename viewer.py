@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import filedialog as fd
 from tkinter import messagebox
 from tkinter.messagebox import showinfo
-
+from threading import *
 from PIL import ImageTk, Image
 
 import K_means_final
@@ -32,6 +32,25 @@ height = ""
 new_height = ""
 new_width = ""
 
+def threading():
+    # Call work function
+    t1=Thread(target=work)
+    t1.start()
+
+def work():
+    new_i, path,time = "", "",""
+    if (type_algo == "DBSCAN"):
+        new_i, path,time = dbscan_final.launch(eps=float(e1.get()), minPts=int(e2.get()), method=type_dist,
+                                          image_path=filepath, new_width=int(new_width.get()),
+                                          new_height=int(new_height.get()))
+    if (type_algo == "KMEANS"):
+        new_i, path,time = K_means_final.launch(k=int(e1.get()), nb_iterations=int(e2.get()), method=type_dist,
+                                           image_path=filepath, new_width=int(new_width.get()),
+                                           new_height=int(new_height.get()))
+    basename = os.path.basename(path)
+    add_results_image(adress=path, image_name=basename, image=new_i, temps=time)
+    img_r = Label(r_image, image=img_result)
+    img_r.grid(row=1, column=0, pady=5)
 
 def add_original_image(adress):
     """
@@ -71,7 +90,10 @@ def add_results_image(adress: str, image_name, image,temps):
 
     image = image.resize(IMG_SIZE, Image.ANTIALIAS)
     img_result = ImageTk.PhotoImage(image)
+    basename = os.path.basename(adress)
+
     Label(r_image,text="Temps d'éxécution total = "+str(temps) + " secondes").grid(row=2,column=0)
+    Label(r_image,text=adress).grid(row=0,column=0)
 
 
 def on_closing():
@@ -81,17 +103,6 @@ def on_closing():
     """
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         root.quit()
-
-
-def callbackWidth(conf,other):
-    value = conf.get()
-    print(value)
-    other.set("200")
-
-def callbackHeight(conf,other):
-    value = conf.get()
-    print(value)
-    other.set("200")
 
 def select_file():
     """
@@ -146,11 +157,7 @@ def select_file():
     l2["text"] = "Height"
     conf1.set(width)
     conf2.set(height)
-    #conf1.trace("w", lambda name, index, mode,sv=conf1: callbackWidth(conf=sv, other=conf2))
-    #conf2.trace("w", lambda name, index, mode,sv=conf2: callbackHeight(conf=sv, other=conf1))
 
-    # new_width["textvariable"] = conf1
-    # new_height["textvariable"] = conf2
     l1.grid(row=4)
     l2.grid(row=5)
     new_width.grid(row=4, column=1)
@@ -182,7 +189,7 @@ def choose():
     submit = Button(
         box_configuration,
         text='Lancer l\'exécution',
-        command=lambda: launch(type_algo=type_algo, type_dist=type_dist, entry1=e1, entry2=e2)
+        command=lambda: launch_process(type_algo=type_algo, type_dist=type_dist, entry1=e1, entry2=e2)
     )
     submit.grid(column=1, row=1)
 
@@ -192,53 +199,11 @@ def add_processing_msg():
     txt_r.grid(row=0, column=0)
 
 
-def launch(type_algo, type_dist, entry1, entry2):
-    add_processing_msg()
-    new_i, path = "", ""
-    if (type_algo == "DBSCAN"):
-        new_i, path,time = dbscan_final.launch(eps=float(entry2.get()), minPts=int(entry1.get()), method=type_dist,
-                                          image_path=filepath, new_width=int(new_width.get()),
-                                          new_height=int(new_height.get()))
-    if (type_algo == "KMEANS"):
-        new_i, path,time = K_means_final.launch(k=int(entry1.get()), nb_iterations=int(entry2.get()), method=type_dist,
-                                           image_path=filepath, new_width=int(new_width.get()),
-                                           new_height=int(new_height.get()))
-    basename = os.path.basename(path)
-    for widgets in r_image.winfo_children(): # Permet de vider le contenu de la frame
+def launch_process(type_algo, type_dist, entry1, entry2):
+    for widgets in r_image.winfo_children():  # Permet de vider le contenu de la frame
         widgets.destroy()
-    add_results_image(adress=path, image_name=basename, image=new_i,temps =time )
-    img_r = Label(r_image, image=img_result)
-    img_r.grid(row=1, column=0, pady=5)
-
-def image_resize(image, wi=None, he=None):
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
-    dim = None
-    (h, w) = image.size
-
-    # if both the width and height are None, then return the
-    # original image
-    if wi is None and he is None:
-        return image
-
-    # check to see if the width is None
-    if wi is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
-        r = he / float(h)
-        dim = (int(w * r), he)
-
-    # otherwise, the height is None
-    else:
-        # calculate the ratio of the width and construct the
-        # dimensions
-        r = wi / float(w)
-        dim = (wi, int(h * r))
-    IMG_SIZE = (wi, he)
-    # resize the image
-    resized = image.resize(IMG_SIZE, Image.ANTIALIAS)
-    # return the resized image
-    return resized
+    threading()
+    add_processing_msg()
 
 def changeVarDist(txt):
     global type_dist
@@ -302,8 +267,8 @@ def start_interface():
         command=select_file
     )
     open_button.grid()
-    root.protocol("WM_DELETE_WINDOW", on_closing)
-    root.mainloop()
 
 if __name__ == '__main__':
     start_interface()
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+    root.mainloop()

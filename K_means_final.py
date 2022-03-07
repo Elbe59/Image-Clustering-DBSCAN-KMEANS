@@ -2,19 +2,21 @@ import os
 import time as t
 
 import cv2
+import matplotlib.colors
 import numpy as np
+import matplotlib.image as img
+from PIL import Image
 
 
 
 # Defining our function
-def kmeans(img, k, nb_iterations, method):
+def kmeans(image, k, nb_iterations, method):
     global dico_dist
     clusters = {}
     for i in range(k):  # Initialise le disctionnaire qui va contenir les différents clusters
         clusters[i] = []
-    idx = np.random.choice(len(img), k, replace=False)  # choisi k index aléatoire dans l'image pour placer les premiers centroides
-    centroids = img[idx, :]  # Choisi les premiers centroides de manière aléatoire
-
+    idx = np.random.choice(len(image), k, replace=False)  # choisi k index aléatoire dans l'image pour placer les premiers centroides
+    centroids = image[idx, :]  # Choisi les premiers centroides de manière aléatoire
     # Calcul de la distance entre chaque labels et les différents centroid
     list_distances = []
     for index in range(len(image)):
@@ -30,22 +32,21 @@ def kmeans(img, k, nb_iterations, method):
                 return 1
             thisDist.append(dist)
         list_distances.append(thisDist)
-    # Choisi le centroid avec le minimum de distance
+    #Choisi le centroid avec le minimum de distance
     labels = np.array([np.argmin(i) for i in list_distances])
 
     # On répète les étapes précédentes jusqu'à atteindre le nombre d'itération désiré
-    for _ in range(nb_iterations):
+    for i in range(nb_iterations):
+        print("Itération: "+str(i+1)+" / "+str(nb_iterations))
         centroids = []
         for idx in range(k):
             # Mise à jour du centroid par la moyenne de son cluster
-            if (len(img[labels == idx]) != 0):
-                temp_cent = img[labels == idx].mean(axis=0)
+            if (len(image[labels == idx]) != 0):
+                temp_cent = image[labels == idx].mean(axis=0)
                 centroids.append(temp_cent)
             else:
                 centroids.append([0, 0, 0]) # Si aucun pixel n'était dans le proche du centroid alors le centroid reste avec la couleur (0,0,0)
         centroids = np.vstack(centroids)  #Mise à jours des centroides
-
-        # distances = cdist(x, centroids, 'euclidean')
         list_distances = []
         for index in range(len(image)):
             thisDist = []
@@ -78,8 +79,8 @@ def save_results(new_img, image_name, k, nb_iterations, method_distance):
         os.makedirs(repo)
 
     path = repo + 'res_k=' + str(k) + '_iter=' + str(nb_iterations) + '_dist=' + method_distance[0] + '__' + image_name
-    image = cv2.cvtColor(new_img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(path, image)
+    #image = cv2.cvtColor(new_img, cv2.COLOR_RGB2BGR)
+    img.imsave(path, new_img)
     return path
 
 
@@ -90,8 +91,9 @@ def img_load(img_path):
     :param img_name:
     """
     global width, height
-    image = cv2.imread((img_path))
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = img.imread(img_path);
+    # image = cv2.imread((img_path))
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     width, height, _ = image.shape
     basename = os.path.basename(img_path)
     return image, basename
@@ -155,11 +157,13 @@ def launch(k, nb_iterations, method, image_path, new_width, new_height):
     global image
     start = t.time()
     image, img_name = img_load(image_path)
+    print("Programme lancé, pour l'image : "+img_name)
+
     # reshape the image to be a list of pixels
     image = image_resize(image, width=new_width, height=new_height)
     width, height, _ = image.shape
     image = image.reshape((image.shape[0] * image.shape[1], 3))
-    labels, clusters, centroids = kmeans(img=image, k=k, nb_iterations=nb_iterations, method=method)
+    labels, clusters, centroids = kmeans(image=image, k=k, nb_iterations=nb_iterations, method=method)
     identified_palette = centroids  # On récupère les différents centroides
 
     recolored_img = np.copy(image)
@@ -171,5 +175,6 @@ def launch(k, nb_iterations, method, image_path, new_width, new_height):
     path = save_results(new_img=recolored_img, image_name=img_name, k=k, nb_iterations=nb_iterations,
                         method_distance=method)
     end = t.time()
+    print("Processus terminé en "+str(round(end - start))+" secondes")
     return recolored_img, path, round(end - start)
 
