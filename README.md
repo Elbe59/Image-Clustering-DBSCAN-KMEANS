@@ -11,12 +11,12 @@ Tester deux méthodes pour les calculs de distance.
       - Ouvrir le terminal windows
       - Se déplacer à la racine du projet 
       - Taper la commande suivante :
-      .\venv\Scripts\python.exe .\viewer.py
+      .\venv\Scripts\python.exe .\main.py
   - 2-
       - Ouvrir le projet avec un IDE
       - Utiliser l'environnement virtuel fournit ou bien éxécuter pip intall -r requirements.txt
       La commande ci dessus va installer tous les packages nécessaire.
-      - Pour finir vous pouvez éxécuter le fichier python : viewer.py
+      - Pour finir vous pouvez éxécuter le fichier python : main.py
 - Une petite fenêtre va s'ouvrir vous proposant de sélectionner un fichier
 - Cliquer sur le bouton "Ouvrir un fichier", l'explorateur de fichier s'ouvre
 - Choisissez l'image souhaité puis cliquer sur ouvrir.
